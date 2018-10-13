@@ -3,10 +3,12 @@ services:
   db:
     image: postgres
     restart: always
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: dev
-      POSTGRES_USER: postgres-dev
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - 5432:5432
 

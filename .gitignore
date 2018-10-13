@@ -12,3 +12,4 @@
 
 .idea
 go-login.iml
+.env
