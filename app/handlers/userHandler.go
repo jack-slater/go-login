@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"net/http"
-	"github.com/jack-slater/go-login/src/datastore"
-	"github.com/jack-slater/go-login/src/model"
+	"github.com/jack-slater/go-login/app/datastore"
+	"github.com/jack-slater/go-login/app/model"
 	"fmt"
 	"encoding/json"
 	"strings"

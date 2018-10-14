@@ -1,6 +1,6 @@
 package datastore
 
-import "github.com/jack-slater/go-login/src/model"
+import "github.com/jack-slater/go-login/app/model"
 
 type Database interface {
 	GetUser(login, password string) error

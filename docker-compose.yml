@@ -12,7 +12,14 @@ services:
     ports:
       - 5432:5432
 
-#  app:
-#    build: ./
-#    ports:
-#      - 8080:8080
+  app:
+    build: .
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+    links:
+      - db
+    command: ["./wait-for-it.sh", "db:5432", "--","./main"]
+

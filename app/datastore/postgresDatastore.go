@@ -3,7 +3,7 @@ package datastore
 import (
 	"database/sql"
 	_ "github.com/lib/pq"
-	"github.com/jack-slater/go-login/src/model"
+	"github.com/jack-slater/go-login/app/model"
 	"log"
 )
 

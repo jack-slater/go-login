@@ -3,15 +3,15 @@ package main
 import (
 	"net/http"
 	"fmt"
-	"github.com/jack-slater/go-login/src/datastore"
+	"github.com/jack-slater/go-login/app/datastore"
 	"log"
-	"github.com/jack-slater/go-login/src/handlers"
+	"github.com/jack-slater/go-login/app/handlers"
 )
 
 func main()  {
 
 
-	connectionString := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", "postgres-dev","password", "dev")
+	connectionString := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", "db","postgres-dev","password", "dev")
 	postgresDb, err := datastore.NewPostgresDataStore(connectionString)
 
 	if err != nil {
