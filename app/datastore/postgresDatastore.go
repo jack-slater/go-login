@@ -17,8 +17,9 @@ func NewPostgresDataStore(connection string) (*PostgresDatastore, error) {
 	if err != nil {
 		return nil, err
 	}
-	createUserTable(connectedDb)
-	return &PostgresDatastore{connectedDb}, nil
+	datastore := &PostgresDatastore{connectedDb}
+	datastore.createUserTable()
+	return datastore, nil
 }
 
 func (p *PostgresDatastore) GetUser(login, password string) error {
@@ -42,7 +43,7 @@ func (p *PostgresDatastore) Close() {
 	p.DB.Close()
 }
 
-func createUserTable(db *sql.DB) {
+func (p *PostgresDatastore) createUserTable() {
 	const qry = `CREATE TABLE IF NOT EXISTS "user" ( 
 id SERIAL PRIMARY KEY,
 	first_name text NOT NULL,
@@ -52,7 +53,7 @@ id SERIAL PRIMARY KEY,
 	password_hash text NOT NULL
 )`
 
-	if _, err := db.Exec(qry); err != nil {
+	if _, err := p.DB.Exec(qry); err != nil {
 		log.Fatal(err)
 	}
 }

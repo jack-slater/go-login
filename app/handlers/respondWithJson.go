@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 )
 
-func RespondWithError(writer http.ResponseWriter, code int, message string  ) {
-	RespondWithJson(writer, code, map[string]string{"error": message})
+func RespondWithError(w http.ResponseWriter, statusCode int, errMsg string  ) {
+	RespondWithJson(w, statusCode, map[string]string{"error": errMsg})
 }
 
-func RespondWithJson(writer http.ResponseWriter, code int, payload interface{}) {
+func RespondWithJson(w http.ResponseWriter, statusCode int, payload interface{}) {
 	response, _ := json.Marshal(payload)
 
-	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(code)
-	writer.Write(response)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	w.Write(response)
 }
