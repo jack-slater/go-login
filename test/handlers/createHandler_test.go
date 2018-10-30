@@ -12,12 +12,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-type MockDb struct{ *datastore.PostgresDatastore }
+type MockCreateDb struct{ *datastore.PostgresDatastore }
 
-func (db *MockDb) GetUser(login, password string) error { return nil }
-func (db *MockDb) Close()                               {}
+func (db *MockCreateDb) GetUser(login, password string) (*model.User, error) { return nil, nil }
+func (db *MockCreateDb) Close()                               {}
 
-func (db *MockDb) CreateUser(user *model.User) (*model.User, error) {
+func (db *MockCreateDb) CreateUser(user *model.User) (*model.User, error) {
 	createdUser := model.User{2, "Jack", "Slater", "jack@slater.com", "slater001", "hashedPassowrd"}
 	if createdUser.Email == user.Email {
 		return nil, errors.New("email error")
@@ -40,7 +40,7 @@ func TestCreateHandler_successfulCreation(t *testing.T) {
 	"password": "sublime"}`)
 
 	req, _ := http.NewRequest("POST", "/create", bytes.NewBuffer(payload))
-	rr := executeResponse(req)
+	rr := executeCreateResponse(req)
 
 	if status := rr.Code; status != http.StatusCreated {
 		t.Errorf("handler returned wrong status code: got %v want %v",
@@ -63,7 +63,7 @@ func TestCreateHandler_alreadyUsedLogin(t *testing.T) {
 	"password": "sublime"}`)
 
 	req, _ := http.NewRequest("POST", "/create", bytes.NewBuffer(payload))
-	rr := executeResponse(req)
+	rr := executeCreateResponse(req)
 
 	if status := rr.Code; status != http.StatusConflict {
 		t.Errorf("handler returned wrong status code: got %v want %v",
@@ -86,7 +86,7 @@ func TestCreateHandler_alreadyUsedEmail(t *testing.T) {
 	"password": "sublime"}`)
 
 	req, _ := http.NewRequest("POST", "/create", bytes.NewBuffer(payload))
-	rr := executeResponse(req)
+	rr := executeCreateResponse(req)
 
 	if status := rr.Code; status != http.StatusConflict {
 		t.Errorf("handler returned wrong status code: got %v want %v",
@@ -109,7 +109,7 @@ func TestCreateHandler_payloadIncorrectFormat(t *testing.T) {
 	"password": "sublime"}`)
 
 	req, _ := http.NewRequest("POST", "/create", bytes.NewBuffer(payloadWithNoLogin))
-	rr := executeResponse(req)
+	rr := executeCreateResponse(req)
 
 	if status := rr.Code; status != http.StatusBadRequest {
 		t.Errorf("handler returned wrong status code: got %v want %v",
@@ -123,8 +123,8 @@ func TestCreateHandler_payloadIncorrectFormat(t *testing.T) {
 	}
 }
 
-func executeResponse(req *http.Request) *httptest.ResponseRecorder {
-	mockDb := MockDb{}
+func executeCreateResponse(req *http.Request) *httptest.ResponseRecorder {
+	mockDb := MockCreateDb{}
 	rr := httptest.NewRecorder()
 	handler := handlers.CreateHandler(&mockDb)
 	handler.ServeHTTP(rr, req)

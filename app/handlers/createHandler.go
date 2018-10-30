@@ -39,13 +39,13 @@ func saveUser(w http.ResponseWriter, r *http.Request, db datastore.Database) {
 func saveToPostgres(db datastore.Database, user *model.User, w http.ResponseWriter) {
 	createdUser, err := db.CreateUser(user)
 	if err != nil {
-		writeErrorMsg(err, w)
+		evaluateCreateErr(err, w)
 		return
 	}
 	RespondWithJson(w, http.StatusCreated, createdUser)
 }
 
-func writeErrorMsg(err error, w http.ResponseWriter) {
+func evaluateCreateErr(err error, w http.ResponseWriter) {
 	var s string
 	if strings.Contains(err.Error(), "email") {
 		s = "email"

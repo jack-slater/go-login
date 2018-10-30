@@ -22,8 +22,8 @@ func NewPostgresDataStore(connection string) (*PostgresDatastore, error) {
 	return datastore, nil
 }
 
-func (p *PostgresDatastore) GetUser(login, password string) error {
-	return nil
+func (p *PostgresDatastore) GetUser(login, password string) (*model.User, error) {
+	return nil, nil
 }
 
 func (p *PostgresDatastore) CreateUser(user *model.User) (*model.User, error) {
