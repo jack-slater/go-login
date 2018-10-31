@@ -5,6 +5,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/jack-slater/go-login/app/model"
 	"log"
+	"fmt"
 )
 
 type PostgresDatastore struct {
@@ -23,7 +24,17 @@ func NewPostgresDataStore(connection string) (*PostgresDatastore, error) {
 }
 
 func (p *PostgresDatastore) GetUser(login, password string) (*model.User, error) {
-	return nil, nil
+
+	u := model.User{}
+	err := p.DB.QueryRow(`SELECT id, first_name, last_name, email FROM "user" WHERE email=$1 AND password_hash=$2`,
+		login, password).Scan(&u.Id, &u.FirstName, &u.LastName, &u.Email)
+
+	if err != nil {
+		log.Print(err)
+		return nil, fmt.Errorf("unauthorised")
+	}
+
+	return &u, nil
 }
 
 func (p *PostgresDatastore) CreateUser(user *model.User) (*model.User, error) {

@@ -24,6 +24,7 @@ func createRoutes(postgresDb *datastore.PostgresDatastore) {
 		fmt.Fprintf(w, "Welcome to Go-Login")
 	})
 	http.Handle("/create", handlers.CreateHandler(postgresDb))
+	http.Handle("/login", handlers.LoginHandler(postgresDb))
 }
 
 func createPostgresDb() *datastore.PostgresDatastore {

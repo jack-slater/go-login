@@ -12,6 +12,17 @@ import (
 	"reflect"
 )
 
+const (
+	FIRST_NAME = "jack"
+	LAST_NAME  = "slater"
+	EMAIL      = "j@j.com"
+	LOGIN      = "slater100"
+	PASSWORD   = "password"
+)
+
+var hashedPassword = helpers.IncryptPassword(PASSWORD)
+var user = model.User{FirstName: FIRST_NAME, LastName: LAST_NAME, Email: EMAIL, Login: LOGIN, Password: hashedPassword}
+
 type TestPostgres struct {
 	ds *datastore.PostgresDatastore
 }
@@ -38,38 +49,21 @@ func TestMain(m *testing.M) {
 func TestCreateUser_success(t *testing.T) {
 	clearTable()
 
-	firstName, lastName, email, login, password := "jack", "slater", "j@j.com", "slater100", "password"
-	hashedPassword := helpers.IncryptPassword(password)
-
-	user, _ := model.NewUser(firstName, lastName, email, login, password)
-
-	want := model.User{Id: 1, FirstName: firstName, LastName: lastName, Email: email, Login: login, Password: hashedPassword}
-	got, _ := testPostgres.ds.CreateUser(user)
+	want := model.User{Id: 1, FirstName: FIRST_NAME, LastName: LAST_NAME, Email: EMAIL, Login: LOGIN, Password: hashedPassword}
+	got, _ := testPostgres.ds.CreateUser(&user)
 
 	if !reflect.DeepEqual(got, &want) {
 		t.Errorf("got user: %v but want user: %v", got, &want)
-	}
-
-	secondUser, _ := model.NewUser(firstName, lastName, "new@email.com", "newLogin", password)
-
-	wantSecond := model.User{Id: 2, FirstName: firstName, LastName: lastName, Email: "new@email.com", Login: "newLogin", Password: hashedPassword}
-	gotSecond, _ := testPostgres.ds.CreateUser(secondUser)
-
-	if !reflect.DeepEqual(gotSecond, &wantSecond) {
-		t.Errorf("got user: %v but want user: %v", gotSecond, &wantSecond)
 	}
 }
 
 func TestCreateUser_idIncrements(t *testing.T) {
 	clearTable()
 
-	firstName, lastName, email, login, password, secondEmail, secondLogin :=
-		"jack", "slater", "j@j.com", "slater100", "password", "second@email.com", "secondLogin"
+	secondEmail, secondLogin := "second@email.com", "secondLogin"
+	secondUser, _ := model.NewUser(FIRST_NAME, LAST_NAME, secondEmail, secondLogin, PASSWORD)
 
-	firstUser, _ := model.NewUser(firstName, lastName, email, login, password)
-	secondUser, _ := model.NewUser(firstName, lastName, secondEmail, secondLogin, password)
-
-	gotFirst, _ := testPostgres.ds.CreateUser(firstUser)
+	gotFirst, _ := testPostgres.ds.CreateUser(&user)
 	gotSecond, _ := testPostgres.ds.CreateUser(secondUser)
 
 	if gotFirst.Id != 1 {
@@ -84,12 +78,9 @@ func TestCreateUser_idIncrements(t *testing.T) {
 func TestCreateUser_emailNotUnique(t *testing.T) {
 	clearTable()
 
-	firstName, lastName, email, login, password := "jack", "slater", "j@j.com", "slater100", "password"
+	testPostgres.ds.CreateUser(&user)
 
-	user, _ := model.NewUser(firstName, lastName, email, login, password)
-	testPostgres.ds.CreateUser(user)
-
-	newUser, _ := model.NewUser("newName", "newName", email, "newLogin", "newPassword")
+	newUser, _ := model.NewUser("newName", "newName", EMAIL, "newLogin", "newPassword")
 	_, err := testPostgres.ds.CreateUser(newUser)
 
 	if err == nil {
@@ -101,18 +92,74 @@ func TestCreateUser_emailNotUnique(t *testing.T) {
 func TestCreateUser_loginNotUnique(t *testing.T) {
 	clearTable()
 
-	firstName, lastName, email, login, password := "jack", "slater", "j@j.com", "slater100", "password"
+	testPostgres.ds.CreateUser(&user)
 
-	user, _ := model.NewUser(firstName, lastName, email, login, password)
-	testPostgres.ds.CreateUser(user)
-
-	newUser, _ := model.NewUser("newName", "newName", "new@email.com", login, "newPassword")
+	newUser, _ := model.NewUser("newName", "newName", "new@email.com", LOGIN, "newPassword")
 	_, err := testPostgres.ds.CreateUser(newUser)
 
 	if err == nil {
 		t.Errorf("expected error %v", err)
 	}
+}
 
+func TestGetUser_success(t *testing.T) {
+	clearTable()
+	insertUser(user)
+
+	got, _ := testPostgres.ds.GetUser(EMAIL, hashedPassword)
+	want := model.User{Id: 1, FirstName: FIRST_NAME, LastName: LAST_NAME, Email: EMAIL}
+
+	if !reflect.DeepEqual(got, &want) {
+		t.Errorf("got user: %v but want user: %v", got, &want)
+	}
+}
+
+func TestGetUser_unknownEmail(t *testing.T) {
+	clearTable()
+	insertUser(user)
+
+	_, err := testPostgres.ds.GetUser("unknown@email.com", hashedPassword)
+	want := fmt.Errorf("unauthorised")
+
+	if err.Error() != want.Error() {
+		t.Errorf("got: %v but want error: %v", err.Error(), want.Error())
+
+	}
+}
+
+func TestGetUser_unknownPassword(t *testing.T) {
+	clearTable()
+	insertUser(user)
+
+	_, err := testPostgres.ds.GetUser(EMAIL, "unknownPassword")
+	want := fmt.Errorf("unauthorised")
+
+	if err.Error() != want.Error() {
+		t.Errorf("got: %v but want error: %v", err.Error(), want.Error())
+
+	}
+}
+
+func TestGetUser_unhashedPassword(t *testing.T) {
+	clearTable()
+	insertUser(user)
+
+	_, err := testPostgres.ds.GetUser(EMAIL, PASSWORD)
+	want := fmt.Errorf("unauthorised")
+
+	if err.Error() != want.Error() {
+		t.Errorf("got: %v but want error: %v", err.Error(), want.Error())
+
+	}
+}
+
+func insertUser(user model.User) {
+	err := testPostgres.ds.DB.QueryRow(`INSERT INTO "user" (first_name, last_name, login, email, password_hash) VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+		user.FirstName, user.LastName, user.Login, user.Email, user.Password).Scan(&user.Id)
+
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func clearTable() {

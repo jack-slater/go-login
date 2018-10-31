@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"encoding/json"
 	"log"
+	"github.com/jack-slater/go-login/app/helpers"
 )
 
 type LoginDTO struct {
@@ -30,7 +31,7 @@ func loginUser(w http.ResponseWriter, r *http.Request, db datastore.Database) {
 	}
 	defer r.Body.Close()
 
-	user, err := db.GetUser(loginDto.Email, loginDto.Password)
+	user, err := db.GetUser(loginDto.Email, helpers.IncryptPassword(loginDto.Password))
 
 	if err != nil {
 		log.Print(err)
